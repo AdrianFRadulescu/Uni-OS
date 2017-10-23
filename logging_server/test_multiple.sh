@@ -26,5 +26,6 @@ case $(jobs -rp) in
 esac
 
 #check output
+# sed -e /tmp/logfile.txt second_file.txt
 diff /tmp/logfile.txt test_out.txt
 echo OK

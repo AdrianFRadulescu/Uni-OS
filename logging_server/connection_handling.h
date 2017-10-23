@@ -17,6 +17,9 @@
 #include <assert.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+#include <ctype.h>
+
+#include "file_handling.h"
 
 #ifndef LOGGING_SERVER_CONNECTION_HANDLING_H
 #define LOGGING_SERVER_CONNECTION_HANDLING_H
@@ -55,7 +58,4 @@ void* thread_process(void*);
 
 int create_client_thread(int, thread_master_t*);
 
-
-
-
-
+void start_multi_threaded_server(int, thread_master_t*);

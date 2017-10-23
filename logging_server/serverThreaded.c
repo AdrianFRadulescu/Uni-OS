@@ -46,28 +46,28 @@ void free_thread_resources(){
 void INT_handling(int sig_no) {
 
     if (sig_no == SIGINT){
-        printf("Do you want to shut the server down(y/n)?\n");
-        if (fgetc(stdin) == 'y') {
 
-            // free memory
-            pthread_mutex_lock(&mutex);
-            free_thread_resources();
-            pthread_mutex_unlock(&mutex);
+        fprintf(stderr, "shutting server down");
 
-            // shutdown active client sockets and free memory
-            shutdown(server_socket_desc, 2);
-            update_log_index_file("log_file_index");
-            _exit(EXIT_SUCCESS);
-        }
+        // free memory
+        pthread_mutex_lock(&mutex);
+        free_thread_resources();
+        pthread_mutex_unlock(&mutex);
+
+        // shutdown active client sockets and free memory
+        shutdown(server_socket_desc, 2);
+        update_log_index_file("log_file_index");
+        close_server_log();
+        _exit(EXIT_SUCCESS);
+
     }
 }
-
 
 int main(int argc, char* argv[]) {
 
     char* end;
     uint16_t port;
-    if (argc == 2) {
+    if (argc == 3) {
         port = (uint16_t) strtol(argv[1], &end, 10);
     } else {
         port = 3349;
@@ -84,8 +84,7 @@ int main(int argc, char* argv[]) {
     }
 
     // init the server_log structure
-    init_server_log("logs.log", "log_file_line_index");
-
+    init_server_log(argv[2], "log_file_line_index");
 
     server_socket_desc = create_listening_socket(port, 2000);
 
@@ -102,8 +101,8 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
 
     update_log_index_file("log_file_index");
+    close_server_log();
     free(th_master_);
-
     return 0;
 }
 

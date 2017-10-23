@@ -8,11 +8,21 @@
 #endif //LOGGING_SERVER_FILE_HANDLING_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-FILE* log_desc_;
+typedef struct log_file{
+    FILE* log_desc_;
+    int line_index;
+} log_file_t;
 
-void write_to_file(FILE* file_desc_, char* text_){
+log_file_t* server_log_;
 
-    fprintf(file_desc_, "%s", text_);
-}
 
+void init_server_log(char*, char*);
+
+void close_server_log();
+
+void write_message_to_file(log_file_t*, char*);
+
+void update_log_index_file(char*);

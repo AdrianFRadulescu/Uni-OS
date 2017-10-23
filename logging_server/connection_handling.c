@@ -23,23 +23,31 @@ size_t m_size(thread_master_t* th_master){
     return size;
 }
 
+/**
+ * Read message from socket
+ * @param socket_desc
+ * @param ok
+ * @return
+ */
+
 static char* get_message(int socket_desc, int* ok){
 
-    char* buffer = calloc(BUFFER_LENGTH, sizeof(char));
+    char* buffer_ = calloc(BUFFER_LENGTH, sizeof(char));
     size_t len = 0;
-    while (1){
-        if (read(socket_desc, &buffer[len], 1) != 1){
+    while (1) {
+        if (read(socket_desc, &buffer_[len], 1) != 1) {
             // the connection is no longer readable
             *ok = 0;
             break;
-        }
-        else if (len == BUFFER_LENGTH || buffer[len] == '\n')
+        } else if (len == BUFFER_LENGTH||buffer_[len] == '\n')
             break;
-        else
+        else {
+            if (!isprint(buffer_[len]))
+                len --;
             len ++;
+        }
     }
-
-    return realloc(buffer, sizeof(char) * len);
+    return realloc(buffer_, sizeof(char) * len);
 }
 
 /**
@@ -61,15 +69,24 @@ static void handle_client_request(const int client_desc){
         message_ = get_message(client_desc, &keep_reading);
         fprintf(stderr, "client: %d %s", client_desc, message_);
 
-        // write message to file
+        // write message to file - critical section
+        pthread_mutex_lock(&mutex);
 
+        write_message_to_file(server_log_, message_);
 
+        pthread_mutex_unlock(&mutex);
 
         free(message_);
     }
 
     fprintf(stderr, "request processed");
 }
+
+/**
+ * frees the resources used by the calling thread
+ * @param th_data_
+ * @param th_master_
+ */
 
 static void clear_thread(void* th_data_, thread_master_t* th_master_){
 
@@ -104,7 +121,15 @@ void* thread_process(void* th_data_){
 
     // remove thread form active thread list
 
+    shutdown(thc_block_ ->client_desc, 2);
+
+    thc_block_ ->client_desc = -1;
+
+    pthread_mutex_lock(&mutex);
+
     clear_thread(th_data_, th_master_);
+
+    pthread_mutex_unlock(&mutex);
 
     pthread_exit(EXIT_SUCCESS);
 }
@@ -115,7 +140,7 @@ void* thread_process(void* th_data_){
  * @return
  */
 
-int create_client_thread(const int server_socket_desc, thread_master_t* th_master ){
+int create_client_thread(const int server_socket_desc, thread_master_t* th_master){
 
     thread_control_block_t* thc_block_ = malloc(sizeof(thread_control_block_t));
 
@@ -164,4 +189,9 @@ int create_client_thread(const int server_socket_desc, thread_master_t* th_maste
     return EXIT_SUCCESS;
 }
 
+void start_multi_threaded_server(const int server_socket_desc, thread_master_t* th_master_){
+
+    while(1)
+        create_client_thread(server_socket_desc, th_master_);
+}
 
