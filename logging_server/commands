@@ -1,0 +1,3 @@
+./client localhost 1234 < test_in1.txt
+gcc -D_POSIX_SOURCE -Wall -Werror -pedantic -std=c99 -D_GNU_SOURCE -pthread serverThreaded.c listening_socket.c connection_handling.c file_handling.c -o serverThreaded
+./serverThreaded 1234 log_test.log
